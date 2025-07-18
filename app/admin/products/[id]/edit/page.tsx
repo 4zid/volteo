@@ -1,10 +1,23 @@
-"use client"
-import { useEffect, useState } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { cookies } from 'next/headers'
+import { jwtVerify } from 'jose'
+import { redirect } from 'next/navigation'
 
-export default function EditProductPage() {
-  const router = useRouter()
-  const params = useParams()
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'volteo_super_secreto_2024')
+
+export default async function EditProductPage({ params }: { params: { id: string } }) {
+  const cookieStore = cookies()
+  const token = cookieStore.get('admin_token')?.value
+
+  if (!token) {
+    redirect('/admin/login')
+  }
+
+  try {
+    await jwtVerify(token, JWT_SECRET)
+  } catch {
+    redirect('/admin/login')
+  }
+
   const id = params?.id as string
 
   const [name, setName] = useState("")

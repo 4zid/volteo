@@ -1,4 +1,9 @@
 import { PrismaClient } from '@prisma/client'
+import { cookies } from 'next/headers'
+import { jwtVerify } from 'jose'
+import { redirect } from 'next/navigation'
+
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'volteo_super_secreto_2024')
 
 async function getSummary() {
   const prisma = new PrismaClient()
@@ -11,6 +16,19 @@ async function getSummary() {
 }
 
 export default async function AdminDashboard() {
+  const cookieStore = cookies()
+  const token = cookieStore.get('admin_token')?.value
+
+  if (!token) {
+    redirect('/admin/login')
+  }
+
+  try {
+    await jwtVerify(token, JWT_SECRET)
+  } catch {
+    redirect('/admin/login')
+  }
+
   const summary = await getSummary()
   return (
     <div className="space-y-8">
